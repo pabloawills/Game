@@ -63,11 +63,10 @@
     document.getElementById('launchBtn').addEventListener('click', async () => {
       statusEl.textContent = 'Intentando abrir juego...';
       try {
-        let res = await fetch(launchUrl, { method: 'POST' });
-        if (res.status === 405) {
-          // Fallback para servidores estáticos que bloquean POST.
-          res = await fetch(launchUrl, { method: 'GET' });
-        }
+let res = await fetch('/launch', { method: 'POST' });
+if (res.status === 405) {
+  res = await fetch('/launch', { method: 'GET' });
+}
         const msg = await res.text();
         if (!res.ok) {
           throw new Error(msg || 'No se pudo lanzar el juego');
