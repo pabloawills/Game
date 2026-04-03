@@ -53,17 +53,49 @@
 
   <script>
     const statusEl = document.getElementById('status');
+    const launchCandidates = [
+      `${window.location.origin}/launch`,
+      `${window.location.protocol}//${window.location.hostname}:8080/launch`,
+      'http://127.0.0.1:8080/launch',
+      'http://localhost:8080/launch',
+    ].filter((v, i, arr) => v && arr.indexOf(v) === i);
+
+    function simplifyServerError(raw) {
+      const text = (raw || '').trim();
+      const lower = text.toLowerCase();
+      if (!text) return 'No hubo respuesta del servidor.';
+      if (lower.includes("there isn't a github pages site here")) {
+        return 'La URL usada no apunta al portal local (respondió GitHub Pages).';
+      }
+      if (lower.includes('<html') || lower.includes('<!doctype html')) {
+        return 'El servidor devolvió una página HTML inesperada en vez de abrir el juego.';
+      }
+      return text.slice(0, 220);
+    }
 
     document.getElementById('launchBtn').addEventListener('click', async () => {
       statusEl.textContent = 'Intentando abrir juego...';
-      try {
-        const res = await fetch('/launch', { method: 'POST' });
-        const msg = await res.text();
-        if (!res.ok) throw new Error(msg || 'No se pudo lanzar el juego');
-        statusEl.textContent = msg;
-      } catch (err) {
-        statusEl.textContent = 'Error: ' + err.message;
+      let lastError = 'No se pudo contactar al portal local.';
+      for (const launchUrl of launchCandidates) {
+        try {
+          statusEl.textContent = `Probando ${launchUrl}...`;
+          let res = await fetch(launchUrl, { method: 'POST' });
+          if (res.status === 405) {
+            // Fallback para servidores que bloquean POST.
+            res = await fetch(launchUrl, { method: 'GET' });
+          }
+          const msg = await res.text();
+          if (!res.ok) {
+            lastError = simplifyServerError(msg);
+            continue;
+          }
+          statusEl.textContent = msg || 'Juego abierto.';
+          return;
+        } catch (err) {
+          lastError = err.message || 'Error de red.';
+        }
       }
+      statusEl.textContent = `Error: ${lastError} Inicia el backend con "python portal.py" y usa la URL del puerto reenviado/localhost:8080.`;
     });
 
     document.getElementById('copyBtn').addEventListener('click', async () => {
