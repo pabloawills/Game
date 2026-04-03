@@ -57,12 +57,18 @@
     document.getElementById('launchBtn').addEventListener('click', async () => {
       statusEl.textContent = 'Intentando abrir juego...';
       try {
-        const res = await fetch('/launch', { method: 'POST' });
+        let res = await fetch('/launch', { method: 'POST' });
+        if (res.status === 405) {
+          // Fallback para servidores estáticos que bloquean POST.
+          res = await fetch('/launch', { method: 'GET' });
+        }
         const msg = await res.text();
-        if (!res.ok) throw new Error(msg || 'No se pudo lanzar el juego');
-        statusEl.textContent = msg;
+        if (!res.ok) {
+          throw new Error(msg || 'No se pudo lanzar el juego');
+        }
+        statusEl.textContent = msg || 'Juego abierto.';
       } catch (err) {
-        statusEl.textContent = 'Error: ' + err.message;
+        statusEl.textContent = 'Error: ' + err.message + ' (asegúrate de abrir este portal con "python portal.py").';
       }
     });
 
