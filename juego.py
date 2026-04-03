@@ -128,7 +128,7 @@ class Game:
 
         self.current_event = None
         self.current_options = []
-        self.timer = 12.0
+        self.timer = 40.0
         self.choice_p1 = None
         self.choice_p2 = None
         self.resolve_cursor = 0
@@ -237,9 +237,7 @@ class Game:
         self.current_event = ev
         self.current_options = ev["options"]
 
-        # Presión de tiempo escala con días: menos segundos según avance.
-        base = 12.0 - (self.day - 1) * 0.5
-        self.timer = max(5.5, base)
+        self.timer = 40.0
         self.choice_p1 = None
         self.choice_p2 = None
         self.resolve_cursor = 0

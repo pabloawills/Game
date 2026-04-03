@@ -122,7 +122,7 @@ const game = {
     this.choiceP1 = null;
     this.choiceP2 = null;
     this.resolveCursor = 0;
-    this.timer = 12;
+    this.timer = 40;
     this.currentEvent = null;
     this.currentOptions = [];
     this.discovered = new Set();
@@ -141,7 +141,7 @@ const game = {
     this.choiceP1 = null;
     this.choiceP2 = null;
     this.resolveCursor = 0;
-    this.timer = Math.max(5.5, 12 - (this.day - 1) * 0.5);
+    this.timer = 40;
     this.state = "event";
     this.startTimer();
     render();
