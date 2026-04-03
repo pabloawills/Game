@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Portal web local para lanzar `juego.py` desde una página HTML."""
 
+from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import subprocess
@@ -56,10 +57,29 @@ class PortalHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
 
+class ReusableThreadingHTTPServer(ThreadingHTTPServer):
+    allow_reuse_address = True
+
+
 def main():
-    print(f"Portal disponible en http://{HOST}:{PORT}")
-    print("Pulsa Ctrl+C para cerrar.")
-    server = ThreadingHTTPServer((HOST, PORT), PortalHandler)
+    print(f"Portal disponible en http://{HOST}:{PORT}", flush=True)
+    print("Pulsa Ctrl+C para cerrar.", flush=True)
+
+    handler = partial(PortalHandler, directory=str(BASE_DIR))
+    try:
+        server = ReusableThreadingHTTPServer((HOST, PORT), handler)
+    except OSError as exc:
+        print(
+            (
+                f"No se pudo iniciar el servidor en {HOST}:{PORT}. "
+                f"Error del sistema: {exc}. "
+                "Cierra el proceso que ya usa ese puerto o cambia PORT."
+            ),
+            file=sys.stderr,
+            flush=True,
+        )
+        raise SystemExit(1) from exc
+
     try:
         server.serve_forever()
     except KeyboardInterrupt:
