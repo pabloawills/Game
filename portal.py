@@ -12,6 +12,19 @@ BASE_DIR = Path(__file__).resolve().parent
 
 
 class PortalHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        super().end_headers()
+
+    def do_OPTIONS(self):
+        if self.path.rstrip("/") == "/launch":
+            self.send_response(204)
+            self.end_headers()
+            return
+        self.send_error(404, "Ruta no encontrada")
+
     def launch_game(self):
         game_file = BASE_DIR / "juego.py"
         if not game_file.exists():
@@ -21,7 +34,6 @@ class PortalHandler(SimpleHTTPRequestHandler):
             return
 
         try:
-            # Se lanza en proceso independiente para no bloquear el servidor HTTP.
             subprocess.Popen([sys.executable, str(game_file)], cwd=str(BASE_DIR))
             self.send_response(200)
             self.end_headers()

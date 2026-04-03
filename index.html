@@ -53,15 +53,20 @@
 
   <script>
     const statusEl = document.getElementById('status');
+    const portalOrigin = 'http://127.0.0.1:8080';
+    const launchUrl = `${portalOrigin}/launch`;
+
+    if (window.location.origin !== portalOrigin) {
+      statusEl.textContent = `Conectando con portal local en ${portalOrigin}...`;
+    }
 
     document.getElementById('launchBtn').addEventListener('click', async () => {
       statusEl.textContent = 'Intentando abrir juego...';
       try {
-        let res = await fetch('/launch', { method: 'POST' });
-        if (res.status === 405) {
-          // Fallback para servidores estáticos que bloquean POST.
-          res = await fetch('/launch', { method: 'GET' });
-        }
+let res = await fetch('/launch', { method: 'POST' });
+if (res.status === 405) {
+  res = await fetch('/launch', { method: 'GET' });
+}
         const msg = await res.text();
         if (!res.ok) {
           throw new Error(msg || 'No se pudo lanzar el juego');
