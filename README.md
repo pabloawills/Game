@@ -1,5 +1,10 @@
 # Game
 
+## Página del juego
+La página del juego está en `index.html` y se sirve desde el portal local.
+
+- URL del portal: [http://127.0.0.1:8080](http://127.0.0.1:8080)
+
 ## Ejecutar juego directamente
 ```bash
 pip install pygame

@@ -1,107 +1,61 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Agencia Espectral — Acceso Local</title>
-  <style>
-    :root {
-      --bg:#10141b;
-      --panel:#1b2230;
-      --text:#e8edf7;
-      --muted:#aab4c7;
-      --accent:#7ce0ff;
-      --warn:#ffbe55;
-      --ok:#78dc8c;
+<script>
+  const statusEl = document.getElementById('status');
+
+  const launchCandidates = [
+    `${window.location.origin}/launch`,
+    `${window.location.protocol}//${window.location.hostname}:8080/launch`,
+    'http://127.0.0.1:8080/launch',
+    'http://localhost:8080/launch',
+  ].filter((v, i, arr) => v && arr.indexOf(v) === i);
+
+  function simplifyServerError(raw) {
+    const text = (raw || '').trim();
+    const lower = text.toLowerCase();
+    if (!text) return 'No hubo respuesta del servidor.';
+    if (lower.includes("there isn't a github pages site here")) {
+      return 'La URL usada no apunta al portal local (respondió GitHub Pages).';
     }
-    body{margin:0;background:linear-gradient(140deg,#0f131a,#151c28);font-family:Consolas,monospace;color:var(--text)}
-    .wrap{max-width:860px;margin:48px auto;padding:0 18px}
-    .card{background:var(--panel);border:1px solid #2b3447;border-radius:14px;padding:26px 28px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-    h1{margin:.2rem 0;color:var(--accent)}
-    h2{margin-top:1.4rem;color:var(--warn);font-size:1.08rem}
-    p,li{color:var(--muted);line-height:1.5}
-    .btn{border:0;border-radius:10px;padding:12px 16px;font:700 15px Consolas,monospace;cursor:pointer;margin-right:8px}
-    .btn-main{background:var(--accent);color:#071016}
-    .btn-alt{background:#2b3447;color:var(--text)}
-    code{background:#121826;border:1px solid #2b3447;padding:2px 6px;border-radius:6px;color:var(--text)}
-    #status{margin-top:12px;color:var(--ok)}
-    .kbd{display:inline-block;padding:2px 6px;border:1px solid #4b566f;border-bottom-width:3px;border-radius:6px;color:var(--text)}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="card">
-      <h1>AGENCIA ESPECTRAL: DOBLE FONDO</h1>
-      <p>Portal local para abrir el juego RPG de decisiones en Pygame.</p>
-
-      <button class="btn btn-main" id="launchBtn">🎮 Lanzar juego</button>
-      <button class="btn btn-alt" id="copyBtn">Copiar comando manual</button>
-      <div id="status">Servidor listo.</div>
-
-      <h2>Controles</h2>
-      <ul>
-        <li>Jugador 1 vota con <span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span>.</li>
-        <li>Jugador 2 vota con <span class="kbd">J</span> <span class="kbd">K</span> <span class="kbd">L</span>.</li>
-        <li>Si no coinciden, decide el mando con <span class="kbd">←</span> <span class="kbd">→</span> + <span class="kbd">ENTER</span>.</li>
-      </ul>
-
-      <h2>Si el botón falla</h2>
-      <p>Ejecuta manualmente: <code>python juego.py</code></p>
-      <p>Para abrir este portal: <code>python portal.py</code> y luego visita <code>http://127.0.0.1:8080</code>.</p>
-    </div>
-  </div>
-
-  <script>
-    const statusEl = document.getElementById('status');
-    const launchCandidates = [
-      `${window.location.origin}/launch`,
-      `${window.location.protocol}//${window.location.hostname}:8080/launch`,
-      'http://127.0.0.1:8080/launch',
-      'http://localhost:8080/launch',
-    ].filter((v, i, arr) => v && arr.indexOf(v) === i);
-
-    function simplifyServerError(raw) {
-      const text = (raw || '').trim();
-      const lower = text.toLowerCase();
-      if (!text) return 'No hubo respuesta del servidor.';
-      if (lower.includes("there isn't a github pages site here")) {
-        return 'La URL usada no apunta al portal local (respondió GitHub Pages).';
-      }
-      if (lower.includes('<html') || lower.includes('<!doctype html')) {
-        return 'El servidor devolvió una página HTML inesperada en vez de abrir el juego.';
-      }
-      return text.slice(0, 220);
+    if (lower.includes('<html') || lower.includes('<!doctype html')) {
+      return 'El servidor devolvió HTML en vez de abrir el juego.';
     }
+    return text.slice(0, 200);
+  }
 
-    document.getElementById('launchBtn').addEventListener('click', async () => {
-      statusEl.textContent = 'Intentando abrir juego...';
-      let lastError = 'No se pudo contactar al portal local.';
-      for (const launchUrl of launchCandidates) {
-        try {
-          statusEl.textContent = `Probando ${launchUrl}...`;
-          let res = await fetch(launchUrl, { method: 'POST' });
-          if (res.status === 405) {
-            // Fallback para servidores que bloquean POST.
-            res = await fetch(launchUrl, { method: 'GET' });
-          }
-          const msg = await res.text();
-          if (!res.ok) {
-            lastError = simplifyServerError(msg);
-            continue;
-          }
-          statusEl.textContent = msg || 'Juego abierto.';
-          return;
-        } catch (err) {
-          lastError = err.message || 'Error de red.';
+  document.getElementById('launchBtn').addEventListener('click', async () => {
+    statusEl.textContent = 'Intentando abrir juego...';
+
+    let lastError = 'No se pudo contactar al portal local.';
+
+    for (const launchUrl of launchCandidates) {
+      try {
+        statusEl.textContent = `Probando ${launchUrl}...`;
+
+        let res = await fetch(launchUrl, { method: 'POST' });
+
+        if (res.status === 405) {
+          res = await fetch(launchUrl, { method: 'GET' });
         }
-      }
-      statusEl.textContent = `Error: ${lastError} Inicia el backend con "python portal.py" y usa la URL del puerto reenviado/localhost:8080.`;
-    });
 
-    document.getElementById('copyBtn').addEventListener('click', async () => {
-      await navigator.clipboard.writeText('python juego.py');
-      statusEl.textContent = 'Comando copiado: python juego.py';
-    });
-  </script>
-</body>
-</html>
+        const msg = await res.text();
+
+        if (!res.ok) {
+          lastError = simplifyServerError(msg);
+          continue;
+        }
+
+        statusEl.textContent = msg || 'Juego abierto.';
+        return;
+
+      } catch (err) {
+        lastError = err.message || 'Error de red.';
+      }
+    }
+
+    statusEl.textContent = `Error: ${lastError}. Ejecuta "python portal.py" primero.`;
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', async () => {
+    await navigator.clipboard.writeText('python juego.py');
+    statusEl.textContent = 'Comando copiado: python juego.py';
+  });
+</script>

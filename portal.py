@@ -13,7 +13,6 @@ BASE_DIR = Path(__file__).resolve().parent
 
 class PortalHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
-        # Permite usar el portal incluso si index.html se sirve desde otro origen local.
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
@@ -35,7 +34,6 @@ class PortalHandler(SimpleHTTPRequestHandler):
             return
 
         try:
-            # Se lanza en proceso independiente para no bloquear el servidor HTTP.
             subprocess.Popen([sys.executable, str(game_file)], cwd=str(BASE_DIR))
             self.send_response(200)
             self.end_headers()
