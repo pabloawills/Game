@@ -53,16 +53,28 @@
 
   <script>
     const statusEl = document.getElementById('status');
+    const portalOrigin = 'http://127.0.0.1:8080';
+    const launchUrl = `${portalOrigin}/launch`;
+
+    if (window.location.origin !== portalOrigin) {
+      statusEl.textContent = `Conectando con portal local en ${portalOrigin}...`;
+    }
 
     document.getElementById('launchBtn').addEventListener('click', async () => {
       statusEl.textContent = 'Intentando abrir juego...';
       try {
-        const res = await fetch('/launch', { method: 'POST' });
+        let res = await fetch(launchUrl, { method: 'POST' });
+        if (res.status === 405) {
+          // Fallback para servidores estáticos que bloquean POST.
+          res = await fetch(launchUrl, { method: 'GET' });
+        }
         const msg = await res.text();
-        if (!res.ok) throw new Error(msg || 'No se pudo lanzar el juego');
-        statusEl.textContent = msg;
+        if (!res.ok) {
+          throw new Error(msg || 'No se pudo lanzar el juego');
+        }
+        statusEl.textContent = msg || 'Juego abierto.';
       } catch (err) {
-        statusEl.textContent = 'Error: ' + err.message;
+        statusEl.textContent = 'Error: ' + err.message + ' (asegúrate de abrir este portal con "python portal.py").';
       }
     });
 

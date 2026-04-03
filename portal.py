@@ -12,11 +12,21 @@ BASE_DIR = Path(__file__).resolve().parent
 
 
 class PortalHandler(SimpleHTTPRequestHandler):
-    def do_POST(self):
-        if self.path != "/launch":
-            self.send_error(404, "Ruta no encontrada")
-            return
+    def end_headers(self):
+        # Permite usar el portal incluso si index.html se sirve desde otro origen local.
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        super().end_headers()
 
+    def do_OPTIONS(self):
+        if self.path.rstrip("/") == "/launch":
+            self.send_response(204)
+            self.end_headers()
+            return
+        self.send_error(404, "Ruta no encontrada")
+
+    def launch_game(self):
         game_file = BASE_DIR / "juego.py"
         if not game_file.exists():
             self.send_response(500)
@@ -34,6 +44,18 @@ class PortalHandler(SimpleHTTPRequestHandler):
             self.send_response(500)
             self.end_headers()
             self.wfile.write(f"Error al lanzar juego: {exc}".encode("utf-8"))
+
+    def do_POST(self):
+        if self.path.rstrip("/") != "/launch":
+            self.send_error(404, "Ruta no encontrada")
+            return
+        self.launch_game()
+
+    def do_GET(self):
+        if self.path.rstrip("/") == "/launch":
+            self.launch_game()
+            return
+        super().do_GET()
 
 
 def main():
